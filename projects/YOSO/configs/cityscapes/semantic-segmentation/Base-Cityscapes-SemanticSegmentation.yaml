@@ -3,12 +3,12 @@ MODEL:
   PIXEL_STD: [58.395, 57.120, 57.375]
   META_ARCHITECTURE: "YOSO"
 DATASETS:
-  TRAIN: ("cityscapes_fine_panoptic_train",)
-  TEST: ("cityscapes_fine_panoptic_val",)
+  TRAIN: ("cityscapes_fine_sem_seg_train",)
+  TEST: ("cityscapes_fine_sem_seg_val",)
 SOLVER:
   IMS_PER_BATCH: 16
   BASE_LR: 0.0001
-  MAX_ITER: 180000 #90000 #
+  MAX_ITER: 90000 #
   WARMUP_FACTOR: 1.0
   WARMUP_ITERS: 0
   WEIGHT_DECAY: 0.05
@@ -36,7 +36,7 @@ INPUT:
   COLOR_AUG_SSD: True
   SIZE_DIVISIBILITY: -1
   FORMAT: "RGB"
-  DATASET_MAPPER_NAME: "yoso_panoptic"
+  DATASET_MAPPER_NAME: "yoso_semantic"
 TEST:
   EVAL_PERIOD: 5000
   AUG:

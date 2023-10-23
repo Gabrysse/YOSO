@@ -58,6 +58,16 @@ class Trainer(DefaultTrainer):
         evaluator_list = []
         evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
 
+        # semantic segmentation
+        if evaluator_type in ["sem_seg", "ade20k_panoptic_seg"]:
+            evaluator_list.append(
+                SemSegEvaluator(
+                    dataset_name,
+                    distributed=True,
+                    output_dir=output_folder,
+                )
+            )
+
         # Panoptic Segmentation
         if evaluator_type in [
             "coco_panoptic_seg",
@@ -80,16 +90,16 @@ class Trainer(DefaultTrainer):
             if cfg.MODEL.YOSO.TEST.SEMANTIC_ON:
                 evaluator_list.append(SemSegEvaluator(dataset_name, distributed=True, output_dir=output_folder))
         # Cityscapes
-        # if evaluator_type == "cityscapes_instance":
-        #     assert (
-        #         torch.cuda.device_count() > comm.get_rank()
-        #     ), "CityscapesEvaluator currently do not work with multiple machines."
-        #     return CityscapesInstanceEvaluator(dataset_name)
-        # if evaluator_type == "cityscapes_sem_seg":
-        #     assert (
-        #         torch.cuda.device_count() > comm.get_rank()
-        #     ), "CityscapesEvaluator currently do not work with multiple machines."
-        #     return CityscapesSemSegEvaluator(dataset_name)
+        if evaluator_type == "cityscapes_instance":
+            assert (
+                torch.cuda.device_count() > comm.get_rank()
+            ), "CityscapesEvaluator currently do not work with multiple machines."
+            return CityscapesInstanceEvaluator(dataset_name)
+        if evaluator_type == "cityscapes_sem_seg":
+            assert (
+                torch.cuda.device_count() > comm.get_rank()
+            ), "CityscapesEvaluator currently do not work with multiple machines."
+            return CityscapesSemSegEvaluator(dataset_name)
         if evaluator_type == "cityscapes_panoptic_seg":
             if cfg.MODEL.YOSO.TEST.SEMANTIC_ON:
                 assert (
@@ -102,11 +112,14 @@ class Trainer(DefaultTrainer):
                 ), "CityscapesEvaluator currently do not work with multiple machines."
                 evaluator_list.append(CityscapesInstanceEvaluator(dataset_name))
         # ADE20K
-        if evaluator_type == "ade20k_panoptic_seg":
-            if cfg.MODEL.YOSO.TEST.INSTANCE_ON:
-                evaluator_list.append(InstanceSegEvaluator(dataset_name, output_dir=output_folder))
-            if cfg.MODEL.YOSO.TEST.SEMANTIC_ON:
-                evaluator_list.append(SemSegEvaluator(dataset_name,distributed=True,output_dir=output_folder))
+        # if evaluator_type == "ade20k_panoptic_seg":
+        #     if cfg.MODEL.YOSO.TEST.INSTANCE_ON:
+        #         evaluator_list.append(InstanceSegEvaluator(dataset_name, output_dir=output_folder))
+        #     if cfg.MODEL.YOSO.TEST.SEMANTIC_ON:
+        #         evaluator_list.append(SemSegEvaluator(dataset_name,distributed=True,output_dir=output_folder))
+
+        if evaluator_type == "ade20k_panoptic_seg" and cfg.MODEL.YOSO.TEST.INSTANCE_ON:
+            evaluator_list.append(InstanceSegEvaluator(dataset_name, output_dir=output_folder))
 
         # LVIS
         # if evaluator_type == "lvis":
