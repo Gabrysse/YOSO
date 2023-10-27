@@ -31,9 +31,9 @@ MODEL:
     IMPORTANCE_SAMPLE_RATIO: 0.75
     TEMPERATIRE: 0.05
     TEST:
-      SEMANTIC_ON: False #True
+      SEMANTIC_ON: True
       INSTANCE_ON: False #True
-      PANOPTIC_ON: True
+      PANOPTIC_ON: False
       OVERLAP_THRESHOLD: 0.8
       OBJECT_MASK_THRESHOLD: 0.8 #0.5
 OUTPUT_DIR: "output/yoso_resnet50_semantic_seg_cityscapes"
