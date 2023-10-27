@@ -49,3 +49,4 @@ _darcs
 /projects/*/datasets
 /models
 /snippet
+wandb/
