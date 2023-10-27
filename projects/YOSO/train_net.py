@@ -38,6 +38,9 @@ from yoso import (
     add_yoso_config,
 )
 
+import wandb
+import random
+import string
 
 class Trainer(DefaultTrainer):
     """
@@ -275,10 +278,39 @@ def setup(args):
     add_yoso_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+
+    # CUSTOM SETTINGS
+    # If the number of GPUs is = 1, ResNets norm must be set to "Norm"
+    if args.num_gpus == 1:
+        cfg.MODEL.RESNETS.NORM = 'BN'
+
+    if not args.resume:
+        run_id = args.run_id
+        dataset = args.config_file.split("/")[2]
+
+        cfg.NAME = f"{cfg.NAME}_bs{cfg.SOLVER.IMS_PER_BATCH}_{cfg.INPUT.CROP.SIZE[0]}x{cfg.INPUT.CROP.SIZE[1]}_{run_id}"
+        cfg.OUTPUT_DIR = f"./output/{dataset}_out/{cfg.NAME}"
+    ##################################################################
+
+
     cfg.freeze()
     default_setup(cfg, args)
     # Setup logger for "YOSO" module
     setup_logger(output=cfg.OUTPUT_DIR, distributed_rank=comm.get_rank(), name="yoso")
+    
+    if comm.get_rank() == 0 and cfg.WANDB.ENABLED:
+        wandb.init(
+            id=cfg.OUTPUT_DIR.rsplit("/", 1)[-1],
+            project='RealTimeSeg-baseline',
+            entity='vandalnas',
+            name=cfg.NAME,
+            config=cfg,
+            sync_tensorboard=True,
+            resume="allow",
+            settings=wandb.Settings(start_method="fork"),
+            group=f"{cfg.DATASETS.TRAIN[0][:3]}-{cfg.NAME[:3]}"
+        )
+
     return cfg
 
 
@@ -299,17 +331,27 @@ def main(args):
 
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
-    return trainer.train()
+    ret = trainer.train()
+
+    if comm.get_rank() == 0 and cfg.WANDB.ENABLED:
+        wandb.finish()
+    return ret
 
 
 if __name__ == "__main__":
+    if 'CITYSCAPES_DATASET' in os.environ:
+        print(f"CITYSCAPES_DATASET env. variable value: {os.environ['CITYSCAPES_DATASET']}")
+    if 'DETECTRON2_DATASETS' in os.environ:
+        print(f"DETECTRON2_DATASETS env. variable value: {os.environ['DETECTRON2_DATASETS']}")
+
     args = default_argument_parser().parse_args()
+    args.run_id = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(15))
     print("Command Line Args:", args)
     launch(
         main,
         args.num_gpus,
         num_machines=args.num_machines,
         machine_rank=args.machine_rank,
-        dist_url=args.dist_url,
+        dist_url='auto', #args.dist_url,
         args=(args,),
     )

@@ -1,6 +1,9 @@
 from detectron2.config import CfgNode as CN
 
 def add_yoso_config(cfg):
+
+    cfg.NAME = "exp_yoso"
+
     cfg.MODEL.YOSO = CN()
     cfg.MODEL.YOSO.SIZE_DIVISIBILITY = 32
     cfg.MODEL.YOSO.NUM_CLASSES = 133
@@ -48,3 +51,7 @@ def add_yoso_config(cfg):
     cfg.INPUT.IMAGE_SIZE = 1024
     cfg.INPUT.MIN_SCALE = 0.1
     cfg.INPUT.MAX_SCALE = 2.0
+
+    # WANDB
+    cfg.WANDB = CN()
+    cfg.WANDB.ENABLED = True
